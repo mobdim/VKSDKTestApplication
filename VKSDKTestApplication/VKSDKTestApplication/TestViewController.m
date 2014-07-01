@@ -23,6 +23,7 @@
 #import "TestViewController.h"
 #import "VKSdk.h"
 #import "ApiCallViewController.h"
+
 @implementation TestViewController
 
 - (void)viewDidLoad {
@@ -56,6 +57,7 @@
 }
 
 static NSArray *labels = nil;
+static NSString *const WALL_POST   = @"wall post";
 static NSString *const USERS_GET   = @"users.get";
 static NSString *const FRIENDS_GET = @"friends.get";
 static NSString *const FRIENDS_GET_FULL = @"friends.get with fields";
@@ -70,9 +72,12 @@ static NSString *const MAKE_SYNCHRONOUS = @"Make synchronous request";
 
 //Fields
 static NSString *const ALL_USER_FIELDS = @"id,first_name,last_name,sex,bdate,city,country,photo_50,photo_100,photo_200_orig,photo_200,photo_400_orig,photo_max,photo_max_orig,online,online_mobile,lists,domain,has_mobile,contacts,connections,site,education,universities,schools,can_post,can_see_all_posts,can_see_audio,can_write_private_message,status,last_seen,common_count,relation,relatives,counters";
+
+#pragma mark - UITableViewDataSource
+
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 	if (!labels)
-		labels = @[USERS_GET, USERS_SUBSCRIPTIONS, FRIENDS_GET, FRIENDS_GET_FULL, UPLOAD_PHOTO, UPLOAD_PHOTO_ALBUM, UPLOAD_PHOTOS, TEST_CAPTCHA, CALL_UNKNOWN_METHOD, TEST_VALIDATION,MAKE_SYNCHRONOUS];
+		labels = @[WALL_POST, USERS_GET, USERS_SUBSCRIPTIONS, FRIENDS_GET, FRIENDS_GET_FULL, UPLOAD_PHOTO, UPLOAD_PHOTO_ALBUM, UPLOAD_PHOTOS, TEST_CAPTCHA, CALL_UNKNOWN_METHOD, TEST_VALIDATION,MAKE_SYNCHRONOUS];
 	return labels.count;
 }
 
@@ -82,6 +87,8 @@ static NSString *const ALL_USER_FIELDS = @"id,first_name,last_name,sex,bdate,cit
 	label.text = labels[indexPath.row];
 	return cell;
 }
+
+#pragma mark - UITableViewDelegate
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 	NSString *label = labels[indexPath.row];
@@ -118,8 +125,31 @@ static NSString *const ALL_USER_FIELDS = @"id,first_name,last_name,sex,bdate,cit
     } else if ([label isEqualToString:MAKE_SYNCHRONOUS]) {
         VKUsersArray * users = [self loadUsers];
         NSLog(@"users %@", users);
+    } else if ([label isEqualToString:WALL_POST]) {
+		
+        [self wallPost];
+        
     }
 }
+
+-(void) wallPost
+{
+    
+    VKRequest *postReq = [[VKApi wall] post:@{VK_API_MESSAGE : @"Test"}];
+    postReq.attempts = 10;
+    //[postReq executeWithResultBlock:nil errorBlock:nil];
+    [postReq executeWithResultBlock:^(VKResponse *response) {
+        
+        NSLog(@"Publishing is finished");
+        
+    } errorBlock:^(NSError *error) {
+        
+        NSLog(@"Publishing error");
+        
+    }];
+    
+}
+
 -(VKUsersArray*) loadUsers {
     __block VKUsersArray *users;
     VKRequest *request = [[VKApi friends] get:@{ @"user_id" : @1 }];
@@ -144,8 +174,10 @@ static NSString *const ALL_USER_FIELDS = @"id,first_name,last_name,sex,bdate,cit
 }
 
 - (void)callMethod:(VKRequest *)method {
-	self->callingRequest = method;
+	
+    self->callingRequest = method;
 	[self performSegueWithIdentifier:@"API_CALL" sender:self];
+    
 }
 
 - (void)testCaptcha {
@@ -212,8 +244,10 @@ static NSString *const ALL_USER_FIELDS = @"id,first_name,last_name,sex,bdate,cit
 	    NSLog(@"Error: %@", error);
 	}];
 }
+
 - (void) logout:(id) sender {
     [VKSdk forceLogout];
     [self.navigationController popToRootViewControllerAnimated:YES];
 }
+
 @end

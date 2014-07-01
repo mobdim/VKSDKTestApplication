@@ -31,19 +31,48 @@ static NSArray  * SCOPE = nil;
     SCOPE = @[VK_PER_FRIENDS, VK_PER_WALL, VK_PER_AUDIO, VK_PER_PHOTOS, VK_PER_NOHTTPS];
 	[super viewDidLoad];
     
-	[VKSdk initializeWithDelegate:self andAppId:@"3974615"];
+	[VKSdk initializeWithDelegate:self andAppId:@"4439199"];
     if ([VKSdk wakeUpSession])
     {
         [self startWorking];
     }
 }
-- (void)startWorking {
-    [self performSegueWithIdentifier:NEXT_CONTROLLER_SEGUE_ID sender:self];
-}
+
 - (void)didReceiveMemoryWarning {
 	[super didReceiveMemoryWarning];
 	// Dispose of any resources that can be recreated.
 }
+
+#pragma mark - VKSdkDelegate
+
+- (void)vkSdkNeedCaptchaEnter:(VKError *)captchaError {
+	VKCaptchaViewController *vc = [VKCaptchaViewController captchaControllerWithError:captchaError];
+	[vc presentIn:self];
+}
+
+- (void)vkSdkTokenHasExpired:(VKAccessToken *)expiredToken {
+	[self authorize:nil];
+}
+
+- (void)vkSdkUserDeniedAccess:(VKError *)authorizationError {
+	[[[UIAlertView alloc] initWithTitle:nil message:@"Access denied" delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil] show];
+}
+
+- (void)vkSdkShouldPresentViewController:(UIViewController *)controller {
+	[self presentViewController:controller animated:YES completion:nil];
+}
+
+- (void)vkSdkReceivedNewToken:(VKAccessToken *)newToken {
+    [self startWorking];
+}
+
+#pragma mark - Methods
+
+- (void)startWorking {
+    [self performSegueWithIdentifier:NEXT_CONTROLLER_SEGUE_ID sender:self];
+}
+
+#pragma mark - Actions
 
 - (IBAction)authorize:(id)sender {
 	[VKSdk authorize:SCOPE revokeAccess:YES];
@@ -57,28 +86,8 @@ static NSArray  * SCOPE = nil;
 	[VKSdk authorize:SCOPE revokeAccess:YES forceOAuth:YES inApp:YES display:VK_DISPLAY_IOS];
 }
 
-- (void)vkSdkNeedCaptchaEnter:(VKError *)captchaError {
-	VKCaptchaViewController *vc = [VKCaptchaViewController captchaControllerWithError:captchaError];
-	[vc presentIn:self];
-}
-
-- (void)vkSdkTokenHasExpired:(VKAccessToken *)expiredToken {
-	[self authorize:nil];
-}
-
-- (void)vkSdkReceivedNewToken:(VKAccessToken *)newToken {
-    [self startWorking];
-}
-
-- (void)vkSdkShouldPresentViewController:(UIViewController *)controller {
-	[self presentViewController:controller animated:YES completion:nil];
-}
-
 - (void)vkSdkAcceptedUserToken:(VKAccessToken *)token {
     [self startWorking];
-}
-- (void)vkSdkUserDeniedAccess:(VKError *)authorizationError {
-	[[[UIAlertView alloc] initWithTitle:nil message:@"Access denied" delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil] show];
 }
 
 
